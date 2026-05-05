@@ -1,2 +1,165 @@
-# skypin-pro
+#<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>SkyPin 지도 앱</title>
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <style>
+    body, html { margin:0; padding:0; height:100%; }
+    #map { height:100%; }
+
+    #menu-btn {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      font-size: 20px;
+      background: #fff;
+      border: 1px solid #ccc;
+      cursor: pointer;
+      z-index: 1000;
+    }
+
+    #side-panel {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 300px;
+      height: 100%;
+      background: #f9f9f9;
+      box-shadow: -2px 0 5px rgba(0,0,0,0.2);
+      padding: 10px;
+      overflow-y: auto;
+      z-index: 999;
+    }
+    #side-panel.hidden { display: none; }
+
+    .place-card {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 5px;
+      margin: 5px 0;
+      background: #e0e0e0;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .place-card span { flex: 1; }
+    .delete-btn {
+      background: #ff6666;
+      border: none;
+      color: white;
+      padding: 3px 6px;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <button id="menu-btn">☰</button>
+
+  <div id="side-panel" class="hidden">
+    <button id="close-panel">닫기 ✖</button>
+    <div id="panel-content"></div>
+  </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+  <script>
+    let map;
+    let list; // 전역 선언
+
+    function initMap() {
+      const seoul = [37.5665, 126.9780];
+      map = L.map('map').setView(seoul, 13);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+      }).addTo(map);
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      initMap();
+
+      const menuBtn = document.getElementById("menu-btn");
+      const sidePanel = document.getElementById("side-panel");
+      const closeBtn = document.getElementById("close-panel");
+      const panelContent = document.getElementById("panel-content");
+
+      menuBtn.addEventListener("click", () => {
+        sidePanel.classList.remove("hidden");
+      });
+      closeBtn.addEventListener("click", () => {
+        sidePanel.classList.add("hidden");
+      });
+      document.addEventListener("click", (e) => {
+        if (!sidePanel.contains(e.target) && e.target !== menuBtn) {
+          sidePanel.classList.add("hidden");
+        }
+      });
+
+      // 입력 폼
+      const form = document.createElement("form");
+      form.innerHTML = `
+        <input type="text" id="place-name" placeholder="명소 이름 입력" required>
+        <button type="submit">추가</button>
+      `;
+      panelContent.appendChild(form);
+
+      // 리스트 영역
+      list = document.createElement("div");
+      list.id = "place-list";
+      panelContent.appendChild(list);
+
+      // 기본 추천 명소 데이터
+      const defaultPlaces = [
+        { name: "남산타워", lat: 37.5512, lng: 126.9882 },
+        { name: "해운대", lat: 35.1587, lng: 129.1604 }
+      ];
+
+      // 기본 명소 추가
+      defaultPlaces.forEach(p => {
+        addPlace(p.name, p.lat, p.lng);
+      });
+
+      // 사용자 입력 이벤트
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const name = document.getElementById("place-name").value.trim();
+        if (name) {
+          addPlace(name);
+          form.reset();
+        }
+      });
+    });
+
+    // 명소 추가 함수
+    function addPlace(name, lat = null, lng = null) {
+      const card = document.createElement("div");
+      card.className = "place-card";
+      card.innerHTML = `
+        <span>${name}</span>
+        <button class="delete-btn">삭제</button>
+      `;
+      list.appendChild(card);
+
+      card.addEventListener("click", () => {
+        const markerLat = lat || map.getCenter().lat;
+        const markerLng = lng || map.getCenter().lng;
+        L.marker([markerLat, markerLng]).addTo(map).bindPopup(name).openPopup();
+      });
+
+      card.querySelector(".delete-btn").addEventListener("click", (e) => {
+        e.stopPropagation();
+        list.removeChild(card);
+      });
+    }
+  </script>
+</body>
+</html>
+ skypin-pro
 드론 촬영지도 앱
